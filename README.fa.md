@@ -6,7 +6,7 @@
 
 ## پروژه‌ها
 
-### KootletLandAC
+### KotletLandAC
 
 یک افزونهٔ ضدتقلب مبتنی بر شواهد برای Paper 1.21.x که با Java 21 ساخته شده است. این افزونه به‌جای مجازات بازیکن بر اساس یک آستانهٔ منفرد، شواهد را در طول زمان جمع‌آوری و بین بررسی‌های مختلف همبسته می‌کند.
 
@@ -19,25 +19,25 @@
 
 **نسخهٔ مستندشدهٔ فعلی:** 1.2.0.
 
-**نکتهٔ مهم:** این افزونه هنوز روی سرور زنده و با بازیکنان واقعی اعتبارسنجی نشده است. هشدارها را سرنخ‌هایی برای بررسی تیم مدیریت بدان، نه مدرک قطعی تخلف. جزئیات در [مستندات کامل KootletLandAC](KootletLandAC/README.md) آمده است.
+**نکتهٔ مهم:** این افزونه هنوز روی سرور زنده و با بازیکنان واقعی اعتبارسنجی نشده است. هشدارها را سرنخ‌هایی برای بررسی تیم مدیریت بدان، نه مدرک قطعی تخلف. جزئیات در [مستندات کامل KotletLandAC](KotletLandAC/README.md) آمده است.
 
-### KootletClient
+### KotletClient
 
 مود کلاینت PvP برای کتلت‌لند روی Minecraft 1.8.9 (با Forge). ماژول‌های HUD، کیستروک، تارگت HUD، کراس‌هیر سفارشی، زوم نرم، منوی تنظیمات داخل بازی با تم‌های رنگی و منوی اصلی انیمیشنی کتلت‌لند. فقط ماژول‌های لجیت، بدون تقلب.
 
-جزئیات در [مستندات KootletClient](KootletClient/README.md) آمده است.
+جزئیات در [مستندات KotletClient](KotletClient/README.md) آمده است.
 
 ## ساختار مخزن
 
-- `KootletLandAC/` — افزونهٔ ضدتقلب Paper و ماژول هشدار Velocity
-- `KootletClient/` — مود کلاینت PvP برای Forge 1.8.9
+- `KotletLandAC/` — افزونهٔ ضدتقلب Paper و ماژول هشدار Velocity
+- `KotletClient/` — مود کلاینت PvP برای Forge 1.8.9
 
 ## ساخت
 
 از داخل پوشهٔ افزونه:
 
 ```bash
-cd KootletLandAC
+cd KotletLandAC
 gradle test build
 ```
 
@@ -47,5 +47,5 @@ gradle test build
 
 - [English](README.md)
 - [فارسی](README.fa.md)
-- [مستندات فنی KootletLandAC](KootletLandAC/README.md)
-- [KootletLandAC — راهنمای فارسی](KootletLandAC/README.fa.md)
+- [مستندات فنی KotletLandAC](KotletLandAC/README.md)
+- [KotletLandAC — راهنمای فارسی](KotletLandAC/README.fa.md)
