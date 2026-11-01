@@ -1,0 +1,9 @@
+[{
+  "modid": "kotletclient",
+  "name": "Kotlet Client",
+  "description": "KotletLand PvP client: HUD modules, keystrokes, zoom and more.",
+  "version": "${version}",
+  "mcversion": "${mcversion}",
+  "authorList": ["Mahbod"],
+  "logoFile": "assets/kotletclient/logo.png"
+}]

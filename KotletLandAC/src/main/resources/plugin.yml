@@ -1,0 +1,19 @@
+name: KotletLandAC
+version: ${version}
+main: ir.kotletland.ac.KotletLandAC
+api-version: '1.21'
+author: TheROMZ52
+description: Modular, evidence-driven anti-cheat for KotletLand
+softdepend: [GrimAC, LiteBans, LuckPerms]
+commands:
+  kac:
+    description: KotletLandAC administration command
+    usage: /kac <debug|verbose|stats|profile|history|checks|integrations|alerts|reload>
+    permission: kotletlandac.admin
+permissions:
+  kotletlandac.admin:
+    default: op
+  kotletlandac.bypass:
+    default: false
+  kotletlandac.alerts:
+    default: op

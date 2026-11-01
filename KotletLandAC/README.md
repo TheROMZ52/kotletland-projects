@@ -1,0 +1,178 @@
+[English](README.md) · [فارسی](README.fa.md)
+
+# KotletLandAC
+
+Evidence-driven anti-cheat for Paper 1.21.x, built for the KotletLand network.
+It does not ban on a single threshold. Every detection produces **evidence with a confidence**, evidence is
+buffered, correlated across checks, looked at over time, and only then turned into an alert.
+**Automatic punishment is off by default.**
+
+> Status: v1.2.0. Compiles and passes unit tests in CI. It has **not yet been validated on a live server with real
+> players**, so treat alerts as leads for staff, not as proof.
+
+## Installation
+
+1. Requirements: Paper 1.21.x, Java 21. GrimAC, LiteBans and LuckPerms are optional.
+2. Build with `gradle build` (or download the CI artifact) and put `build/libs/KotletLandAC-*.jar` in `plugins/`.
+3. Start the server once, then edit `plugins/KotletLandAC/config.yml`.
+4. Give staff `kotletlandac.alerts` (alerts) and `kotletlandac.admin` (commands).
+
+## Configuration
+
+| Key | Meaning |
+| --- | --- |
+| `settings.alerts` | send alerts to staff with `kotletlandac.alerts` |
+| `settings.confidence-warning-threshold` / `violation-warning-threshold` | when an alert (MEDIUM) fires |
+| `settings.auto-punishment` | master switch for automatic action, **false by default** |
+| `bypass.mode` | `skip` (no checks for bypass players) or `log-only` (checks run, console only) |
+| `decision.high-alert-cooldown-ms` | faster alerts at HIGH level |
+| `decision.very-high.commands` | console commands for VERY_HIGH, only used if `auto-punishment` is true |
+| `checks.movement.*`, `checks.combat.*` | enable or disable each check |
+| `integrations.grim`, `integrations.grim-confidence` | optional Grim signal |
+
+`/kac reload` re-reads the config. It does not reset player state, re-register listeners or duplicate tasks, and it re-enables checks that were isolated after errors.
+
+## How a detection becomes an action
+
+```
+Paper events -> PaperEventPacketAdapter -> NormalizedPacket -> PacketPipeline -> engine
+engine: state model (ground, liquids, effects) + physics + prediction + lag compensation
+checks -> Evidence(check, confidence, violation, data)
+       -> Buffer / VL -> Correlation (cross-check) -> Behavior (5s/10s/20s/30s windows)
+       -> Decision: LOW (monitor) / MEDIUM (alert) / HIGH (alert faster) / VERY_HIGH (configurable action)
+```
+
+* **Prediction:** a vanilla gravity model (`vy' = (vy - 0.08) * 0.98`) tracks vertical motion. One bad tick means nothing; Fly needs 6 of the last 8 ticks above the model. Speed needs 3 of the last 6 ticks over the limit.
+* **Lag compensation:** ping history, jitter, TPS and MSPT widen tolerances (movement) and the reach allowance (interpolation of a moving victim).
+* **Context:** elytra, riptide, levitation, Jump Boost, ice/slime/honey (the block under the player), liquids, vines, cobweb, teleports, knockback and vehicles are handled before any movement flag.
+* **Decision levels:** MEDIUM needs confidence and VL above the alert thresholds. HIGH needs 90%+ confidence, VL 10+ and 2+ independent checks. VERY_HIGH needs 95%+, VL 15+, 3+ independent checks and sustained behaviour. A single check can never reach VERY_HIGH.
+
+## Checks
+
+| Check | Signals |
+| --- | --- |
+| Speed | expected horizontal speed (effects, ice, soul sand, liquids...) vs actual, sustained over ticks, windowed statistics |
+| Fly | upward deviation from the gravity model, impossible upward delta |
+| NoFall | client says on ground while the server sees no ground below (ground spoof), fall distance |
+| Jesus | standing on a liquid surface for 8+ ticks |
+| Step, HighJump, LongJump | vertical/horizontal deltas vs the prediction, Jump Boost aware |
+| Timer | packet-drift balance (more than 20 movement packets per second), lag-spike safe |
+| Phase | real block collision of the player's hitbox |
+| NoWeb, Strafe, Motion, InvalidMovement | context specific, plus non-finite and absurd coordinates |
+| Velocity | response to the knockback that was actually applied |
+| Reach | geometric distance to the hitbox minus a lag-aware allowance, line of sight |
+| KillAura | multi-signal: rotation, hit angle, target switching, timing. No single signal is enough |
+| Aim | rotation delta shape, sensitivity grid (supporting signal only) |
+| AutoClicker | interval distribution: coefficient of variation, entropy, burst timing |
+
+Only real melee hits reach combat checks (`ENTITY_ATTACK`), so thorns and sweep damage cannot fake evidence.
+
+## Commands and permissions
+
+| Command | Description |
+| --- | --- |
+| `/kac debug <player>` | live movement, prediction, state, lag, velocity, combat, VL, confidence, recent evidence |
+| `/kac verbose <player>` | debug plus the raw data of the last evidence |
+| `/kac stats` | checks run, detections, alerts, avg/max check time, event time, memory, per-check counts |
+| `/kac checks`, `/kac integrations` | enabled checks, integration availability |
+| `/kac alerts`, `/kac reload` | alert/punishment state, reload config |
+
+| Permission | Default | Meaning |
+| --- | --- | --- |
+| `kotletlandac.admin` | op | commands |
+| `kotletlandac.alerts` | op | receive alerts |
+| `kotletlandac.bypass` | false | exempt from checks (see `bypass.mode`) |
+
+## Grim integration (optional)
+
+If GrimAC is installed, its flags are read through the Grim API event bus and become evidence named `Grim` (default
+confidence 0.5). Grim is **one signal, not the truth**: the correlation engine only counts it next to at least two of
+our own detections, and Grim alone can never alert or punish. Without Grim the plugin works the same.
+
+The bridge uses reflection (no compile-time dependency) and was written from the public GrimAPI 1.3 documentation.
+**It has not been verified against a running Grim server.** If anything does not match, it disables itself and logs
+the reason; check `/kac integrations` and the startup diagnostics.
+
+## LiteBans and LuckPerms
+
+No special code is needed. `decision.very-high.commands` run as console commands, so a command such as
+`tempban {player} 1d KotletAC: {check} ({confidence}%)` is recorded by LiteBans like any staff action. LuckPerms
+resolves `kotletlandac.*` like any other permission node. Both are only detected and reported at startup.
+
+## Debugging and performance
+
+* `/kac debug <player>` is the first stop for a suspicious alert; every alert stores the numbers behind it (expected vs actual position, deviations, ping, jitter, TPS, state).
+* The main thread does the movement work once per tick per player that moved; there is no blocking IO and no database in the core. Player data is removed on quit.
+* `/kac stats` shows average and maximum check time and event cost. Watch `max` after changes.
+* A check that throws is isolated, logged once, and disabled after 25 errors (`/kac stats` lists it). Everything else keeps running.
+
+## Developer API
+
+Published through Bukkit's `ServicesManager` as `ir.kotletland.ac.api.KotletLandACApi`:
+
+```java
+KotletLandACApi api = Bukkit.getServicesManager().load(KotletLandACApi.class);
+api.getViolationLevel(uuid); api.getConfidence(uuid); api.getBehaviorScore(uuid);
+api.listenDetection(evidence -> { /* log, forward... */ });
+api.submitEvidence(uuid, evidence);
+api.registerCheck(new CustomCheck(){ /* name(), onMove(...), onAttack(...) */ });
+api.registerIntegration(integration);
+```
+
+`StorageProvider` and `DetectionBridge` are interfaces; the core has no database or network dependency.
+
+## Storage (optional)
+
+`storage.type` is `none` (default), `sqlite` or `mysql` and is read once at startup. Evidence goes through a bounded queue to
+one worker thread and is written in batches, so the main thread never waits on the database. If the queue is full, rows are
+dropped and counted instead of blocking. Rows older than `storage.retention-days` are purged at startup and hourly.
+`/kac history <player>` reads the latest stored evidence off the main thread. A database that cannot be opened makes the
+plugin continue without storage (logged at startup). Paper ships the SQLite and MySQL JDBC drivers.
+
+## Multi-server (Velocity)
+
+Each backend keeps detecting and deciding on its own. With `network.enabled: true` a backend sends evidence at or above
+`network.min-confidence` over the plugin channel `kotletlandac:evidence` (rate limited per player and check). The
+`velocity/` module (built together with the plugin by `gradle build`) receives it and shows an alert to staff with
+`kotletlandac.alerts.network` who are on a **different** server. It never punishes. `network.server-name` should match the
+backend's name in the Velocity config. Central punishment is not implemented; the proxy only aggregates alerts.
+The message format lives in one source file shared by both sides and is validated on decode (version, lengths, ranges).
+
+## Profiling
+
+`/kac profile` shows calls, average, maximum and total time per section (`movement.state`, `movement.checks`, `timer`,
+`combat`, `record`, `pipeline`); `/kac profile reset` clears it. `settings.profiling: false` turns it off.
+
+## Development
+
+```
+cd KotletLandAC
+gradle test build
+```
+
+Unit tests cover the pure logic (timer balance, statistics windows, lag math, reach geometry, behavior, decision,
+correlation, rotation analysis, packet validation, JSON, wire format, profiler, SQLite storage). Scenario tests feed
+synthetic streams into the vertical motion model (normal jump, Jump Boost, ledge, hover, ascent, knockback, landing) and
+into correlation/behavior/decision (legit player stays LOW, a sustained multi-check cheater escalates, one check never
+punishes). Integration tests against a live Paper server, Grim, LiteBans, LuckPerms and a Velocity proxy are **not**
+covered; they need a real server.
+
+## Known limitations
+
+* No raw packet layer: only Bukkit events are used, so transaction/keep-alive timing is **NOT IMPLEMENTED** (it needs a packet library such as PacketEvents) and `onGround` comes from the client. Ground spoofing is detected by comparing it with the server's own collision check.
+* The Velocity module only aggregates alerts; it was compiled in CI but not run on a real proxy. Central punishment is not implemented.
+* Piston pushes and other plugin-driven movement without a velocity event can still look unusual.
+* Aim quantization breaks with zoom mods and touch (Bedrock) input, so it only supports other signals.
+* Hover with no movement packets at all is not seen, because no movement event fires.
+* Grim bridge unverified on a live Grim server. Detection quality is unvalidated on a live server.
+
+## Changelog
+
+### 1.2.0
+SQLite/MySQL evidence storage with async batching and retention, `/kac history`, plugin-message bridge plus a Velocity module for cross-server alerts, built-in profiler (`/kac profile`), vertical motion model extracted into a testable class, scenario tests.
+
+### 1.1.0
+Spec completion: packet abstraction (normalized packets + pipeline), state model, vertical prediction with multi-tick deviation, lag compensation engine, behavior engine, decision engine with levels, configurable VERY_HIGH action (off by default), bypass modes, optional Grim bridge, custom checks and integrations in the API, windowed statistics (median, percentile, entropy), new combat signals (hit angle, target switching, rotation grid), richer metrics and `/kac debug`.
+
+### 1.0.1
+False-positive fixes (elytra, riptide, ice, slabs, thorns/sweep), real Timer, reachable Jesus, correct Velocity vector, fail-safe isolation.
