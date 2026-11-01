@@ -1,10 +1,26 @@
-# KotletLand Projects
+<div align="center">
 
-A toolbox for the KotletLand universe — anti-cheat, server utilities, and fewer “who broke the server?” moments.
+<img src="https://capsule-render.vercel.app/api?type=waving&color=0:050505,35:171717,70:303030,100:050505&height=190&section=header&text=KotletLand%20Projects&fontSize=54&fontColor=ffffff&fontAlignY=38&desc=ANTI-CHEAT%20AND%20A%20PVP%20CLIENT&descAlignY=62&descSize=13" width="100%" />
+
+<br/>
+
+<img src="https://img.shields.io/badge/JAVA%2021-111111?style=for-the-badge&logo=openjdk&logoColor=white" /> <img src="https://img.shields.io/badge/PAPER-111111?style=for-the-badge&logo=papermc&logoColor=white" /> <img src="https://img.shields.io/badge/FORGE%201.8.9-111111?style=for-the-badge&logo=curseforge&logoColor=white" /> <img src="https://img.shields.io/github/stars/TheROMZ52/kotletland-projects?style=for-the-badge&color=111111&labelColor=050505&logo=github" /> <img src="https://img.shields.io/github/last-commit/TheROMZ52/kotletland-projects?style=for-the-badge&color=111111&labelColor=050505" />
+
+<br/>
+
+### A toolbox for the KotletLand universe — anti-cheat, server utilities, and fewer “who broke the server?” moments.
+
+<img src="https://skillicons.dev/icons?i=java,gradle,maven,githubactions&theme=dark" />
+
+</div>
+
+---
 
 A collection of Minecraft server tools and development projects for the KotletLand network.
 
-## Projects
+---
+
+## 01 / PROJECTS
 
 ### KotletLandAC
 
@@ -27,12 +43,16 @@ A PvP client mod for KotletLand on Minecraft 1.8.9 (Forge). HUD modules, keystro
 
 See the [KotletClient documentation](KotletClient/README.md).
 
-## Repository structure
+---
+
+## 02 / REPOSITORY STRUCTURE
 
 - `KotletLandAC/` — Paper anti-cheat plugin and Velocity alert module
 - `KotletClient/` — Forge 1.8.9 PvP client mod
 
-## Build
+---
+
+## 03 / BUILD
 
 From the plugin directory:
 
@@ -43,10 +63,26 @@ gradle test build
 
 Requirements: Java 21 and Paper 1.21.x for a server installation.
 
-## Documentation
+---
+
+## 04 / DOCUMENTATION
 
 - [English](README.md)
 - [فارسی](README.fa.md)
 - [KotletLandAC technical documentation](KotletLandAC/README.md)
 - [KotletLandAC — راهنمای فارسی](KotletLandAC/README.fa.md)
 - [KotletClient documentation](KotletClient/README.md)
+
+---
+
+<div align="center">
+
+<a href="https://github.com/TheROMZ52?tab=repositories"><img src="https://img.shields.io/badge/MORE%20PROJECTS-111111?style=for-the-badge&logo=github&logoColor=white" /></a>
+
+<br/><br/>
+
+<img src="https://capsule-render.vercel.app/api?type=waving&color=0:050505,50:202020,100:050505&height=110&section=footer" width="100%" />
+
+<sub>© TheROMZ52 • Built with code, curiosity, and a suspicious number of tabs.</sub>
+
+</div>
