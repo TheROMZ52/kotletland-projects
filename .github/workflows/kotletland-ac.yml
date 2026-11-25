@@ -1,6 +1,9 @@
-name: Build KotletLandAC
+name: Build and publish KotletLandAC
+
 on:
   push:
+    branches:
+      - main
     paths:
       - 'KotletLandAC/**'
       - '.github/workflows/kotletland-ac.yml'
@@ -8,6 +11,10 @@ on:
     paths:
       - 'KotletLandAC/**'
       - '.github/workflows/kotletland-ac.yml'
+
+permissions:
+  contents: write
+
 jobs:
   build:
     runs-on: ubuntu-latest
@@ -23,4 +30,30 @@ jobs:
       - uses: gradle/actions/setup-gradle@v4
         with:
           gradle-version: '8.14.3'
-      - run: gradle test build --no-daemon
+      - name: Run tests and build
+        run: gradle clean test build --no-daemon
+      - name: Verify release files
+        run: |
+          test -s build/libs/KotletLandAC-1.2.0.jar
+          test -s velocity/build/libs/velocity-1.2.0.jar
+      - name: Upload build artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: KotletLandAC-1.2.0
+          path: |
+            KotletLandAC/build/libs/KotletLandAC-1.2.0.jar
+            KotletLandAC/velocity/build/libs/velocity-1.2.0.jar
+          if-no-files-found: error
+          retention-days: 30
+      - name: Publish public GitHub Release
+        if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+        uses: softprops/action-gh-release@v2
+        with:
+          tag_name: v1.2.0-build.${{ github.run_number }}
+          name: KotletLandAC 1.2.0 (Build ${{ github.run_number }})
+          target_commitish: ${{ github.sha }}
+          generate_release_notes: true
+          make_latest: true
+          files: |
+            KotletLandAC/build/libs/KotletLandAC-1.2.0.jar
+            KotletLandAC/velocity/build/libs/velocity-1.2.0.jar
